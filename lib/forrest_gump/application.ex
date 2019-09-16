@@ -1,19 +1,17 @@
 defmodule ForrestGump.Application do
-  # See https://hexdocs.pm/elixir/Application.html
-  # for more information on OTP Applications
   @moduledoc false
 
   use Application
 
   def start(_type, _args) do
-    children = [
-      # Starts a worker by calling: ForrestGump.Worker.start_link(arg)
-      # {ForrestGump.Worker, arg}
-    ]
+    redises = Application.get_env(:forrest_gump, :redises, [])
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: ForrestGump.Supervisor]
+    children =
+      for {args, index} <- Stream.with_index(redises, 1) do
+        {ForrestGump.TcpWorker, args}
+      end
+
+    opts = [strategy: :one_for_one, name: ForrestGump.Supervisor, max_restarts: 1000, max_seconds: 1]
     Supervisor.start_link(children, opts)
   end
 end
